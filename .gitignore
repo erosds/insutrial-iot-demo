@@ -1,0 +1,211 @@
+# =============================================================================
+# .gitignore per Progetto Industrial IoT Demo
+# =============================================================================
+
+# Python
+# -------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+# -------------------
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.virtualenv/
+.venv/
+
+# IDEs e Editor
+# -------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs e Debug
+# ------------
+logs/
+*.log
+*.out
+*.err
+debug.log
+error.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker Volumes e Dati Persistenti
+# ----------------------------------
+# Manteniamo i file docker-compose ma escludiamo i dati persistenti
+docker-compose.override.yml
+.docker/
+volumes/
+
+# Database Backups e Dumps
+# -------------------------
+*.sql.backup
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+
+# Configurazioni Sensibili
+# -------------------------
+.env
+.env.local
+.env.production
+.env.development
+secrets.txt
+credentials.json
+*.key
+*.pem
+*.crt
+
+# File Temporanei e Cache
+# -----------------------
+*.tmp
+*.temp
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# OS Generated Files
+# ------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Node.js (se aggiungi frontend)
+# -------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+package-lock.json
+yarn.lock
+
+# Jupyter Notebooks (se usati per analisi)
+# -----------------------------------------
+.ipynb_checkpoints/
+*.ipynb
+
+# Grafana Data (se locale)
+# -------------------------
+grafana-data/
+grafana/data/
+grafana/logs/
+
+# TimescaleDB Data (se locale)
+# -----------------------------
+timescaledb-data/
+postgres-data/
+pgdata/
+
+# File di Backup
+# --------------
+*.backup
+*.bak
+*~
+.backup/
+
+# File di Test e Benchmark
+# -------------------------
+test-results/
+benchmark-results/
+performance-tests/
+
+# Documentation Build
+# -------------------
+docs/_build/
+docs/build/
+site/
+
+# Certificates e Keys (SICUREZZA)
+# --------------------------------
+*.crt
+*.key
+*.pem
+*.p12
+*.pfx
+certs/
+certificates/
+
+# Configurazioni IDE Specifiche
+# ------------------------------
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries/
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml
+
+# File di Sistema
+# ---------------
+.directory
+*.lnk
+
+# File di Lock
+# ------------
+poetry.lock
+Pipfile.lock
+
+# =============================================================================
+# MANTIENI QUESTI FILE (esplicitamente inclusi)
+# =============================================================================
+!.env.example
+!init-db.sql
+!requirements.txt
+!docker-compose.yml
+!README.md
+
+# =============================================================================
+# NOTE:
+# - Il file .env.example è incluso per mostrare la struttura delle configurazioni
+# - I file Docker sono inclusi per facilità di deployment
+# - I file di configurazione del database sono inclusi
+# - Tutti i dati sensibili (.env, logs, volumi Docker) sono esclusi
+# =============================================================================

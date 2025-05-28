@@ -1,0 +1,65 @@
+# Docker Compose per Industrial IoT Demo
+
+services:
+  # TimescaleDB - Database ottimizzato per time-series
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16  # Ultima versione con PostgreSQL 16
+    container_name: industrial_timescaledb
+    restart: unless-stopped
+    ports:
+      - "5431:5432"  # Porta esterna 5431, interna 5432
+    environment:
+      # Configurazione database iniziale
+      POSTGRES_DB: industrial_iot      # Nome database
+      POSTGRES_USER: iot_user          # Utente per applicazione
+      POSTGRES_PASSWORD: iot_password  # Password (cambiarla in produzione!)
+      # Configurazioni TimescaleDB specifiche
+      TIMESCALEDB_TELEMETRY: 'off'     # Disabilita telemetria
+    volumes:
+      # Persistenza dati - i dati sopravvivono al riavvio container
+      - timescale_data:/var/lib/postgresql/data
+      # Script di inizializzazione database
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - iot_network
+    # Health check per verificare che il DB sia pronto
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iot_user -d industrial_iot -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Grafana - Dashboard e visualizzazione dati
+  grafana:
+    image: grafana/grafana:latest
+    container_name: industrial_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"  # Interfaccia web Grafana
+    environment:
+      # Configurazione admin di default
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      # Configurazioni per sviluppo (da cambiare in produzione)
+      GF_INSTALL_PLUGINS: grafana-clock-panel  # Plugin aggiuntivi
+    volumes:
+      # Persistenza configurazioni Grafana
+      - grafana_data:/var/lib/grafana
+      # Dashboard pre-configurate
+      - ./config/grafana-dashboard.json:/var/lib/grafana/dashboards/industrial.json
+    networks:
+      - iot_network
+    # Grafana parte dopo TimescaleDB
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+# Rete isolata per i servizi
+networks:
+  iot_network:
+    driver: bridge
+
+# Volumi persistenti per i dati
+volumes:
+  timescale_data:    # Dati TimescaleDB
+  grafana_data:      # Configurazioni Grafana

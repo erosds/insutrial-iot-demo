@@ -1,0 +1,25 @@
+# Dipendenze Python per il progetto Industrial IoT
+
+# Database e TimescaleDB
+psycopg2-binary==2.9.9    # Driver PostgreSQL/TimescaleDB ad alte performance
+sqlalchemy==2.0.23        # ORM per gestione database più elegante (opzionale)
+
+# OPC UA - Comunicazione industriale
+opcua==0.98.13            # Libreria OPC UA per server e client Python
+
+# Utilità e logging
+python-decouple==3.8      # Gestione configurazioni da variabili ambiente
+loguru==0.7.2             # Logging avanzato e colorato per debugging
+schedule==1.2.0           # Scheduler per task periodici del DAQ
+
+# Data processing e analisi
+pandas==2.1.4             # Manipolazione dati e DataFrame
+numpy==1.26.2             # Calcoli numerici per elaborazione segnali
+
+# Networking e async
+aiohttp==3.9.1            # HTTP client asincrono (se serve API REST)
+asyncio-mqtt==0.16.1      # MQTT client per comunicazioni IoT (opzionale)
+
+# Development e debugging
+python-dotenv==1.0.0      # Caricamento variabili da file .env
+rich==13.7.0              # Output colorato e formattato per console
