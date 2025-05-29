@@ -126,7 +126,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "pressurebar"
         },
         "overrides": []
       },
@@ -196,7 +196,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "mm/s"
         },
         "overrides": []
       },
@@ -747,7 +747,24 @@
           "format": "table",
           "rawQuery": true,
           "rawSql": "SELECT \n sensor_type AS \"Sensore\",\n value AS \"Valore\",\n unit AS \"Unità\",\n quality AS \"Qualità %\",\n status AS \"Stato\",\n time AS \"Ultimo Aggiornamento\"\nFROM (\n SELECT *,\n        ROW_NUMBER() OVER (PARTITION BY sensor_type ORDER BY time DESC) as rn\n FROM sensor_data \n WHERE machine_id = 'MACHINE_001'\n   AND time >= NOW() - INTERVAL '10 minutes'\n) t \nWHERE rn = 1 \nORDER BY sensor_type",
-          "refId": "A"
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
       "title": "🚨 Stato Corrente Sensori",
@@ -894,7 +911,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(*) as \"Anomalie Rilevate\"\nFROM sensor_data \nWHERE sensor_type = 'anomaly'\n AND time >= NOW() - INTERVAL '1 hour'",
+          "rawSql": "SELECT \n COALESCE(COUNT(*), 0) as \"Anomalie Rilevate\" \n FROM sensor_data \n WHERE sensor_type = 'anomaly' \n AND machine_id = 'MACHINE_001' \n AND time >= NOW() - INTERVAL '1 hour';",
           "refId": "A"
         }
       ],
@@ -921,5 +938,5 @@
   "timezone": "browser",
   "title": "🏭 Industrial IoT - Dashboard con Grafici Separati",
   "uid": "26b5af0a-0b44-47ca-8fa5-81bf594dd176",
-  "version": 9
+  "version": 13
 }
