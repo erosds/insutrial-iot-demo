@@ -126,7 +126,7 @@
               }
             ]
           },
-          "unit": "pressurebars"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -196,7 +196,7 @@
               }
             ]
           },
-          "unit": "velocityms"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -258,7 +258,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -269,18 +269,18 @@
             "insertNulls": false,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
-            "pointSize": 5,
+            "pointSize": 4,
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "auto",
             "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "area"
             }
           },
           "mappings": [],
@@ -291,11 +291,16 @@
                 "color": "green"
               },
               {
+                "color": "yellow",
+                "value": 30
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 35
               }
             ]
-          }
+          },
+          "unit": "celsius"
         },
         "overrides": [
           {
@@ -312,7 +317,119 @@
                 }
               }
             ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 6
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "last",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "den9e2you2n7kf"
           },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n time AS \"time\",\n value AS \"Temperature\"\nFROM sensor_data \nWHERE sensor_type = 'temperature'\n AND machine_id = 'MACHINE_001'\n AND time >= NOW() - INTERVAL '30 minutes'\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "🌡️ Trend Temperatura - Ultimi 30 Minuti",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "den9e2you2n7kf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "area"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red"
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "green",
+                "value": 1.1
+              },
+              {
+                "color": "red",
+                "value": 1.9
+              }
+            ]
+          },
+          "unit": "pressurebars"
+        },
+        "overrides": [
           {
             "matcher": {
               "id": "byName",
@@ -327,7 +444,115 @@
                 }
               }
             ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 6
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "last",
+            "mean"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "den9e2you2n7kf"
           },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n time AS \"time\",\n value AS \"Pressure\"\nFROM sensor_data \nWHERE sensor_type = 'pressure'\n AND machine_id = 'MACHINE_001'\n AND time >= NOW() - INTERVAL '30 minutes'\nORDER BY time",
+          "refId": "A"
+        }
+      ],
+      "title": "⚡ Trend Pressione - Ultimi 30 Minuti",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "den9e2you2n7kf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "area"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 1.5
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
           {
             "matcher": {
               "id": "byName",
@@ -347,17 +572,18 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
-        "x": 0,
+        "w": 8,
+        "x": 16,
         "y": 6
       },
-      "id": 4,
+      "id": 6,
       "options": {
         "legend": {
           "calcs": [
             "min",
             "max",
-            "last"
+            "last",
+            "mean"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -365,7 +591,7 @@
         },
         "tooltip": {
           "hideZeros": false,
-          "mode": "multi",
+          "mode": "single",
           "sort": "none"
         }
       },
@@ -379,33 +605,11 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \n time AS \"time\",\n value AS \"Temperature\"\nFROM sensor_data \nWHERE sensor_type = 'temperature'\n AND machine_id = 'MACHINE_001'\n AND time >= NOW() - INTERVAL '30 minutes'\nORDER BY time",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "den9e2you2n7kf"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT \n time AS \"time\",\n value AS \"Pressure\"\nFROM sensor_data \nWHERE sensor_type = 'pressure'\n AND machine_id = 'MACHINE_001'\n AND time >= NOW() - INTERVAL '30 minutes'\nORDER BY time",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "grafana-postgresql-datasource",
-            "uid": "den9e2you2n7kf"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
           "rawSql": "SELECT \n time AS \"time\",\n value AS \"Vibration\"\nFROM sensor_data \nWHERE sensor_type = 'vibration'\n AND machine_id = 'MACHINE_001'\n AND time >= NOW() - INTERVAL '30 minutes'\nORDER BY time",
-          "refId": "C"
+          "refId": "A"
         }
       ],
-      "title": "📈 Trend Tutti i Sensori - Ultimi 30 Minuti",
+      "title": "📳 Trend Vibrazione - Ultimi 30 Minuti",
       "type": "timeseries"
     },
     {
@@ -443,7 +647,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "status"
+              "options": "Stato"
             },
             "properties": [
               {
@@ -480,7 +684,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "quality"
+              "options": "Qualità %"
             },
             "properties": [
               {
@@ -519,7 +723,7 @@
         "x": 0,
         "y": 14
       },
-      "id": 5,
+      "id": 7,
       "options": {
         "cellHeight": "sm",
         "footer": {
@@ -581,7 +785,7 @@
         "x": 0,
         "y": 20
       },
-      "id": 6,
+      "id": 8,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -657,7 +861,7 @@
         "x": 12,
         "y": 20
       },
-      "id": 7,
+      "id": 9,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -710,12 +914,12 @@
     "list": []
   },
   "time": {
-    "from": "now-30m",
-    "to": "now"
+    "from": "2025-05-29T11:35:08.095Z",
+    "to": "2025-05-29T11:53:26.571Z"
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "🏭 Industrial IoT - Dashboard Completa",
+  "title": "🏭 Industrial IoT - Dashboard con Grafici Separati",
   "uid": "26b5af0a-0b44-47ca-8fa5-81bf594dd176",
-  "version": 2
+  "version": 9
 }
