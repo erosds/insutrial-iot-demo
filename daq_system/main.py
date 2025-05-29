@@ -314,70 +314,6 @@ class IndustrialDAQSystem:
         
         return current_value
     
-    def detect_anomalies(self, readings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Rileva anomalie nei dati usando algoritmi avanzati e soglie configurabili.
-        
-        Args:
-            readings: Lista letture elaborate
-            
-        Returns:
-            List[Dict]: Lista anomalie rilevate
-        """
-        anomalies = []
-        
-        for reading in readings:
-            try:
-                # Anomalie già marcate nella validazione
-                if reading.get('anomaly'):
-                    anomaly = {
-                        'timestamp': reading['timestamp'],
-                        'machine_id': reading['machine_id'],
-                        'sensor_type': reading['sensor_type'],
-                        'value': reading['value'],
-                        'anomaly_type': reading['anomaly'],
-                        'severity': self._calculate_severity(reading),
-                        'description': self._get_anomaly_description(reading['anomaly'], reading)
-                    }
-                    anomalies.append(anomaly)
-                
-                # Rilevamento deviazioni significative dalla media mobile
-                if reading.get('high_deviation'):
-                    anomaly = {
-                        'timestamp': reading['timestamp'],
-                        'machine_id': reading['machine_id'],
-                        'sensor_type': reading['sensor_type'],
-                        'value': reading['value'],
-                        'anomaly_type': 'HIGH_DEVIATION',
-                        'severity': 'MEDIUM',
-                        'description': f"Deviazione significativa dalla media mobile: {reading.get('deviation_from_avg', 0):.2f}"
-                    }
-                    anomalies.append(anomaly)
-                
-                # Rilevamento pattern anomali (cambi rapidi)
-                rapid_change = self._detect_rapid_change(reading)
-                if rapid_change:
-                    anomaly = {
-                        'timestamp': reading['timestamp'],
-                        'machine_id': reading['machine_id'],
-                        'sensor_type': reading['sensor_type'],
-                        'value': reading['value'],
-                        'anomaly_type': 'RAPID_CHANGE',
-                        'severity': 'HIGH',
-                        'description': f"Cambiamento rapido rilevato: {rapid_change}"
-                    }
-                    anomalies.append(anomaly)
-                    
-            except Exception as e:
-                logger.error(f"Errore rilevamento anomalie: {e}")
-                continue
-        
-        if anomalies:
-            logger.warning(f"🚨 Rilevate {len(anomalies)} anomalie")
-            self.stats['anomalies_detected'] += len(anomalies)
-        
-        return anomalies
-    
     def _calculate_severity(self, reading: Dict[str, Any]) -> str:
         """
         Calcola la gravità di un'anomalia basandosi sul tipo e valore.
@@ -446,6 +382,7 @@ class IndustrialDAQSystem:
     def handle_anomalies(self, anomalies: List[Dict[str, Any]]):
         """
         Gestisce le anomalie rilevate con azioni appropriate.
+        AGGIORNATO: Salva le anomalie nel database in modo più robusto.
         
         Args:
             anomalies: Lista anomalie da gestire
@@ -466,6 +403,13 @@ class IndustrialDAQSystem:
                 # Salva anomalia nel buffer per analisi successive
                 self.anomaly_buffer.append(anomaly)
                 
+                # NUOVO: Salva immediatamente l'anomalia nel database
+                anomaly_saved = self._store_anomaly_robust(anomaly)
+                if anomaly_saved:
+                    logger.info(f"✅ Anomalia salvata nel database: {anomaly['anomaly_type']}")
+                else:
+                    logger.warning(f"⚠️ Errore salvataggio anomalia nel database")
+                
                 # Azioni automatiche basate sulla gravità
                 if severity in ['CRITICAL', 'HIGH']:
                     # In un sistema reale, qui si potrebbero:
@@ -474,35 +418,232 @@ class IndustrialDAQSystem:
                     # - Fermare automaticamente macchinari pericolosi
                     logger.info(f"🚨 Attivazione protocolli emergenza per {anomaly['sensor_type']}")
                 
-                # Salva anomalia nel database per storico
-                self._store_anomaly(anomaly)
-                
             except Exception as e:
                 logger.error(f"Errore gestione anomalia: {e}")
-    
-    def _store_anomaly(self, anomaly: Dict[str, Any]):
+
+    def _store_anomaly_robust(self, anomaly: Dict[str, Any]) -> bool:
         """
-        Salva l'anomalia nel database per analisi storiche.
+        Salva l'anomalia nel database in modo robusto.
+        NUOVO METODO: Più affidabile del precedente _store_anomaly.
+        
+        Args:
+            anomaly: Dizionario con dati anomalia
+            
+        Returns:
+            bool: True se salvataggio riuscito
         """
         try:
-            # Crea record anomalia per database
+            # Crea record anomalia per database con struttura corretta
             anomaly_record = {
                 'timestamp': anomaly['timestamp'],
                 'machine_id': anomaly['machine_id'],
                 'sensor_type': 'anomaly',  # Tipo speciale per anomalie
                 'location': settings.daq.location,
-                'value': 1.0,  # Valore dummy per indicare presenza anomalia
-                'unit': 'count',
-                'quality': 100,
-                'status': anomaly['anomaly_type']
+                'value': self._get_anomaly_numeric_value(anomaly),  # Valore numerico per l'anomalia
+                'unit': 'severity',  # Unità è la severità
+                'quality': 100,  # Qualità sempre 100 per anomalie (sono eventi certi)
+                'status': anomaly['anomaly_type']  # Il tipo anomalia va nello status
             }
             
-            # Usa il sistema standard per salvare
-            sensor_db.insert_sensor_reading(**anomaly_record)
+            # Salva usando il metodo diretto del database manager
+            success = sensor_db.insert_sensor_reading(**anomaly_record)
             
+            if success:
+                logger.debug(f"Anomalia salvata: {anomaly['anomaly_type']} per {anomaly['sensor_type']}")
+                return True
+            else:
+                logger.error(f"Errore salvataggio anomalia nel database")
+                return False
+                
         except Exception as e:
             logger.error(f"Errore salvataggio anomalia: {e}")
-    
+            return False
+
+    def _get_anomaly_numeric_value(self, anomaly: Dict[str, Any]) -> float:
+        """
+        Converte il tipo di anomalia in un valore numerico per il database.
+        Questo permette di fare query e grafici anche sulle anomalie.
+        
+        Args:
+            anomaly: Dizionario anomalia
+            
+        Returns:
+            float: Valore numerico rappresentativo
+        """
+        # Mappa severità a valori numerici
+        severity_values = {
+            'LOW': 1.0,
+            'MEDIUM': 2.0,
+            'HIGH': 3.0,
+            'CRITICAL': 4.0
+        }
+        
+        # Mappa tipi anomalia a valori specifici
+        anomaly_type_values = {
+            'OUT_OF_RANGE': 10.0,
+            'HIGH_VIBRATION': 20.0,
+            'HIGH_DEVIATION': 30.0,
+            'RAPID_CHANGE': 40.0,
+            'LOW_QUALITY': 50.0
+        }
+        
+        # Combina severità e tipo per valore unico
+        base_value = severity_values.get(anomaly.get('severity', 'LOW'), 1.0)
+        type_value = anomaly_type_values.get(anomaly.get('anomaly_type', 'UNKNOWN'), 0.0)
+        
+        return base_value + (type_value / 10.0)  # Es: HIGH_VIBRATION + HIGH = 3.0 + 2.0 = 5.0
+
+    # NUOVO METODO: Per testare il salvataggio anomalie
+    def test_anomaly_storage(self):
+        """
+        Testa il salvataggio delle anomalie nel database.
+        Utile per debugging.
+        """
+        logger.info("🧪 Test salvataggio anomalie...")
+        
+        # Crea anomalia di test
+        test_anomaly = {
+            'timestamp': datetime.now(timezone.utc),
+            'machine_id': settings.daq.machine_id,
+            'sensor_type': 'temperature',
+            'value': 50.0,  # Temperatura alta
+            'anomaly_type': 'OUT_OF_RANGE',
+            'severity': 'HIGH',
+            'description': 'Test anomalia - temperatura fuori range'
+        }
+        
+        # Testa salvataggio
+        success = self._store_anomaly_robust(test_anomaly)
+        
+        if success:
+            logger.success("✅ Test anomalia salvata correttamente")
+            
+            # Verifica che sia stata effettivamente salvata
+            try:
+                recent_anomalies = sensor_db.get_latest_readings(
+                    machine_id=settings.daq.machine_id,
+                    sensor_type='anomaly',
+                    limit=1
+                )
+                
+                if recent_anomalies:
+                    logger.success(f"✅ Anomalia verificata nel database: {recent_anomalies[0]}")
+                else:
+                    logger.warning("⚠️ Anomalia non trovata nel database dopo salvataggio")
+                    
+            except Exception as e:
+                logger.error(f"Errore verifica anomalia: {e}")
+        else:
+            logger.error("❌ Test anomalia fallito")
+
+    # AGGIORNAMENTO: Modifica detect_anomalies per essere più aggressivo
+    def detect_anomalies(self, readings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Rileva anomalie nei dati usando algoritmi avanzati e soglie configurabili.
+        AGGIORNATO: Più aggressivo nel rilevare anomalie per test.
+        
+        Args:
+            readings: Lista letture elaborate
+            
+        Returns:
+            List[Dict]: Lista anomalie rilevate
+        """
+        anomalies = []
+        
+        for reading in readings:
+            try:
+                # Anomalie già marcate nella validazione
+                if reading.get('anomaly'):
+                    anomaly = {
+                        'timestamp': reading['timestamp'],
+                        'machine_id': reading['machine_id'],
+                        'sensor_type': reading['sensor_type'],
+                        'value': reading['value'],
+                        'anomaly_type': reading['anomaly'],
+                        'severity': self._calculate_severity(reading),
+                        'description': self._get_anomaly_description(reading['anomaly'], reading)
+                    }
+                    anomalies.append(anomaly)
+                
+                # Rilevamento deviazioni significative dalla media mobile
+                if reading.get('high_deviation'):
+                    anomaly = {
+                        'timestamp': reading['timestamp'],
+                        'machine_id': reading['machine_id'],
+                        'sensor_type': reading['sensor_type'],
+                        'value': reading['value'],
+                        'anomaly_type': 'HIGH_DEVIATION',
+                        'severity': 'MEDIUM',
+                        'description': f"Deviazione significativa dalla media mobile: {reading.get('deviation_from_avg', 0):.2f}"
+                    }
+                    anomalies.append(anomaly)
+                
+                # Rilevamento pattern anomali (cambi rapidi)
+                rapid_change = self._detect_rapid_change(reading)
+                if rapid_change:
+                    anomaly = {
+                        'timestamp': reading['timestamp'],
+                        'machine_id': reading['machine_id'],
+                        'sensor_type': reading['sensor_type'],
+                        'value': reading['value'],
+                        'anomaly_type': 'RAPID_CHANGE',
+                        'severity': 'HIGH',
+                        'description': f"Cambiamento rapido rilevato: {rapid_change}"
+                    }
+                    anomalies.append(anomaly)
+                
+                # NUOVO: Rilevamento anomalie più aggressive per test
+                # Anomalia se valore è negli ultimi/primi 20% del range
+                if reading['sensor_type'] in ['temperature', 'pressure', 'vibration']:
+                    is_anomaly_range = self._check_extended_anomaly_range(reading)
+                    if is_anomaly_range:
+                        anomaly = {
+                            'timestamp': reading['timestamp'],
+                            'machine_id': reading['machine_id'],
+                            'sensor_type': reading['sensor_type'],
+                            'value': reading['value'],
+                            'anomaly_type': 'EXTENDED_RANGE',
+                            'severity': 'LOW',
+                            'description': f"Valore in range esteso di controllo: {reading['value']:.2f} {reading['unit']}"
+                        }
+                        anomalies.append(anomaly)
+                        
+            except Exception as e:
+                logger.error(f"Errore rilevamento anomalie: {e}")
+                continue
+        
+        if anomalies:
+            logger.warning(f"🚨 Rilevate {len(anomalies)} anomalie")
+            self.stats['anomalies_detected'] += len(anomalies)
+        
+        return anomalies
+
+    def _check_extended_anomaly_range(self, reading: Dict[str, Any]) -> bool:
+        """
+        NUOVO: Controlla se il valore è in un range esteso per generare più anomalie di test.
+        
+        Args:
+            reading: Lettura sensore
+            
+        Returns:
+            bool: True se in range anomalo esteso
+        """
+        sensor_type = reading['sensor_type']
+        value = reading['value']
+        
+        # Range estesi per rilevare più anomalie (per testing)
+        extended_ranges = {
+            'temperature': {'min': 20.0, 'max': 35.0},  # Range più stretto
+            'pressure': {'min': 1.0, 'max': 1.8},      # Range più stretto  
+            'vibration': {'min': 0.0, 'max': 2.0}      # Range più stretto
+        }
+        
+        if sensor_type in extended_ranges:
+            range_config = extended_ranges[sensor_type]
+            return value < range_config['min'] or value > range_config['max']
+        
+        return False
+
     def update_statistics(self, readings: List[Dict[str, Any]], storage_success: bool):
         """
         Aggiorna le statistiche operative del sistema.
