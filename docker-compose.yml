@@ -41,7 +41,6 @@ services:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
       # Configurazioni per sviluppo (da cambiare in produzione)
-      GF_INSTALL_PLUGINS: grafana-clock-panel  # Plugin aggiuntivi
     volumes:
       # Persistenza configurazioni Grafana
       - grafana_data:/var/lib/grafana
